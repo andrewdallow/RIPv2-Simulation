@@ -63,9 +63,13 @@ class Router:
             if is_valid_port and is_valid_cost and is_valid_id:
                 outputs_dict[int(output[0])] = {'cost': int(output[1]), 
                                                 'id': int(output[2])}
+            else:
+                raise Exception('Invalid Outputs')
+            
         return outputs_dict
     
     def print_router_info(self):
+        '''Print information about the router'''
         print('Router ID: {}'.format(self.router_id))
         print('Input Ports: {}'.format(', '.join(str(x) for x in self.input_ports)))
         print('Outputs: ')
