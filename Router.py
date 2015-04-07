@@ -1,11 +1,20 @@
 '''
    Program that implements a routing deamon based on the RIP version 2 protocol.
+   Can be run by: python3 Router.py <router_config_file> 
    
    Authors:
        Andrew Dallow
        Dillon George 
 '''
 import configparser
+import select
+import socket
+import sys
+import time
+import threading
+
+HOST = '127.0.0.1' #localhost
+MAX_NUM_INPUTS = 15
 
 class Router:
     
@@ -23,6 +32,8 @@ class Router:
         #set output ports, cost and output router id
         self.outputs = self.get_outputs(config)
         
+        #Dictionary of all input ports and corresponding socket objects.
+        self.connections = {}        
                 
     def get_router_id(self, config):
         '''Read and return the router id number from the configuration file'''
@@ -71,18 +82,84 @@ class Router:
     def print_router_info(self):
         '''Print information about the router'''
         print('Router ID: {}'.format(self.router_id))
-        print('Input Ports: {}'.format(', '.join(str(x) for x in self.input_ports)))
+        print('Input Ports: {}'.format(
+            ', '.join(str(x) for x in self.input_ports)))
         print('Outputs: ')
         for output in self.outputs:
             print (output)
             for values in self.outputs[output]:
                 print (values, ':', self.outputs[output][values])        
         
-        
-def main():
-    router = Router('router_1.txt')
-    router.print_router_info()
     
+    
+    def setup_inputs(self):
+        
+        #create socket for each input port
+        for port in self.input_ports:
+            try:
+                self.connections[port] = socket.socket(
+                    socket.AF_INET, socket.SOCK_DGRAM)
+                print('Socket ' + str(port) + ' Connected')
+            except socket.error as msg:
+                print('Failed to create socket. Message: ' + str(msg))
+                sys.exit()
+                
+            #bind port to socket
+            try:
+                self.connections[port].bind((HOST, port))
+                print('Socket ' + str(port) + ' Bind Complete')                
+            except socket.error as msg:
+                print('Failed to create socket. Message ' + str(msg))
+                sys.exit()
+            
+    
+    def update(self):
+        '''Send a message to all output ports''' 
+        
+        for output in list(self.outputs.keys()):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)            
+            message = 'Update From Router-ID:' + str(self.router_id)
+            sock.sendto(str.encode(message), (HOST, output))
+            print('Message Send: ' + str(output))
+        
+    
+    def timer(self, period, function):
+        '''Start a periodic timer which calls a specified function'''
+        
+        threading.Timer(period, self.timer, [period, function]).start()
+        function()
+        
+    def start_timers(self):
+        '''Start the various timers'''
+        self.timer(5.0, self.update)
+    
+    def main_loop(self):
+        '''Main loop of Router which listens to the input ports and processes
+        data received from those ports using select(). [Currently only prints
+        the received data.]''' 
+        
+        inputs = self.connections.values()
+        while True:
+            readable, writable, exceptional = select.select(inputs,[],[])
+            
+            for port in readable:
+                received = port.recvfrom(1024)
+                data = received[0].decode('utf-8')
+                addr = received[1]
+                
+                #Process received data
+                if data:             
+                    print('Message[' + addr[0] + ':' 
+                          + str(port.getsockname()[1]) + '] - ' + data.strip())
+            
+            
+    
+def main():
+    router = Router(str(sys.argv[-1])) 
+    router.print_router_info()
+    router.setup_inputs()
+    router.start_timers()
+    router.main_loop()
 main()
         
     
