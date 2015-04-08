@@ -33,7 +33,10 @@ class Router:
         self.outputs = self.get_outputs(config)
         
         #Dictionary of all input ports and corresponding socket objects.
-        self.connections = {}        
+        self.connections = {}  
+        
+        #Dictionary of routing table
+        self.routing_table = {}      
                 
     def get_router_id(self, config):
         '''Read and return the router id number from the configuration file'''
@@ -44,6 +47,7 @@ class Router:
             raise Exception('Invalid Router ID Number')  
         
         return id
+    
     
     def get_input_ports(self, config):
         '''Read parse and return a list of input port numbers from the 
@@ -115,9 +119,8 @@ class Router:
     
     def update(self):
         '''Send a message to all output ports''' 
-        
-        for output in list(self.outputs.keys()):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)            
+        sock = list(self.connections.values())[1]
+        for output in list(self.outputs.keys()):                        
             message = 'Update From Router-ID:' + str(self.router_id)
             sock.sendto(str.encode(message), (HOST, output))
             print('Message Send: ' + str(output))
