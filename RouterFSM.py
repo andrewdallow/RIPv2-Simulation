@@ -381,9 +381,12 @@ class Router:
         '''Send a message to all output ports''' 
         if self.outputs != {} and self.input_ports != []:
             sock = list(self.connections.values())[1]
-            for output in list(self.outputs.keys()):                        
+            for output in self.outputs:                        
                 message = 'Update From Router-ID: ' + str(self.router_id)
-                sock.sendto(str.encode(message), (HOST, output))
+                
+                sock.sendto(str.encode(message), (HOST, 
+                                                  self.outputs[output]["port"]))
+                
                 print("[" + time.strftime("%H:%M:%S") 
                       + "]: Message Sent To Router: " + str(output))
         
