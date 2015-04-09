@@ -1,6 +1,6 @@
 '''
    Program that implements a routing deamon based on the RIP version 2 protocol.
-   Can be run by: python3 Router.py <router_config_file> 
+   Can be run by: python3 RouterFSM.py <router_config_file> 
    
    Authors:
        Andrew Dallow
@@ -14,7 +14,9 @@ import time
 import threading
 
 HOST = '127.0.0.1' #localhost
-MAX_NUM_INPUTS = 15
+MAX_METRIC = 16
+ROUTE_TIMEOUT = 180.0
+DELETE_TIMEOUT = 120.0
 
 ##===========================================================================
 ## TRANSITIONS
@@ -62,6 +64,8 @@ class StartUp(State):
         self.get_outputs(config)
         
         self.setup_inputs()
+        self.setupRoutingTable()
+        self.FSM.router.printRoutingTable()
         
         self.FSM.toTransition("toWaiting") 
     
@@ -83,7 +87,8 @@ class StartUp(State):
         ports = config['Settings']['input-ports'].split(', ')        
         
         for port in ports:
-            if 1024 <= int(port) <= 64000:
+            if 1024 <= int(port) <= 64000 and not(
+                                    int(port) in self.FSM.router.input_ports):
                 self.FSM.router.input_ports.append(int(port))
             else:
                 raise Exception('Invalid Port Number') 
@@ -109,13 +114,14 @@ class StartUp(State):
         outputs = [i.split('-') for i in outputs]
                         
         for output in outputs:
-            is_valid_port = 1024 <= int(output[0]) <= 64000
+            is_valid_port = 1024 <= int(output[0]) <= 64000 and not(
+                                    int(output[0]) in self.FSM.router.outputs)
             is_valid_cost = 1 <= int(output[1]) < 16
             is_valid_id = 1 <= int(output[2]) <= 64000
             if is_valid_port and is_valid_cost and is_valid_id:
-                self.FSM.router.outputs[int(output[0])] = {
-                                                'cost': int(output[1]), 
-                                                'id': int(output[2])}
+                self.FSM.router.outputs[int(output[2])] = {
+                                                'metric': int(output[1]), 
+                                                'port': int(output[0])}
             else:
                 raise Exception('Invalid Outputs')
     
@@ -139,6 +145,23 @@ class StartUp(State):
             except socket.error as msg:
                 print('Failed to create socket. Message ' + str(msg))
                 sys.exit()
+    
+    def setupRoutingTable(self):
+        
+        for output in self.FSM.router.outputs:
+            timeout = threading.Timer(ROUTE_TIMEOUT, self.FSM.router.timeout, 
+                                      [output])
+            self.FSM.router.routing_table[output] = {
+                        'metric' : self.FSM.router.outputs[output]["metric"],
+                        'NextHop': output,
+                        'changed': 0,
+                        'timeout': 0,
+                        'timer'  : timeout
+                        }            
+            timeout.start()
+            
+    
+        
 
 
 class Waiting(State):
@@ -334,7 +357,25 @@ class Router:
         self.FSM.setState("StartUp")
     
     def execute(self):
-        self.FSM.execute()    
+        self.FSM.execute() 
+        
+    def printRoutingTable(self):
+        print("+-----------+----------+-----------+---------------+----------+")
+        print("|                      Routing Table                          |")
+        print("+-----------+----------+-----------+---------------+----------+")
+        print("|Router ID  |  Metric  |  NextHop  |  ChangedFlag  |  Timeout |")
+        print("+-----------+----------+-----------+---------------+----------+")        
+        template = "|{:^11}|{:^10}|{:^11}|{:^15}|{:^10}|"
+        
+        for entry in self.routing_table:
+            print(template.format(entry, 
+                            self.routing_table[entry]["metric"],
+                            self.routing_table[entry]["NextHop"],
+                            self.routing_table[entry]["changed"],
+                            self.routing_table[entry]["timeout"],
+                            ))
+            print("+-----------+----------+-----------+---------------+----------+")
+           
     
     def update(self):
         '''Send a message to all output ports''' 
@@ -343,9 +384,32 @@ class Router:
             for output in list(self.outputs.keys()):                        
                 message = 'Update From Router-ID: ' + str(self.router_id)
                 sock.sendto(str.encode(message), (HOST, output))
-                print("[" + time.strftime("%H:%M:%S") + "]: Message Sent To: " 
-                      + str(output))
+                print("[" + time.strftime("%H:%M:%S") 
+                      + "]: Message Sent To Router: " + str(output))
         
+    
+    def timeout(self, output):
+        print("[" + time.strftime("%H:%M:%S") + "]:  Router: " + str(output) 
+              + " timed out, starting garbage collection" )
+        
+        deleteTimeout = threading.Timer(DELETE_TIMEOUT, self.deleteTimer, 
+                                        [output])
+        self.routing_table[output]["metric"] = MAX_METRIC
+        self.routing_table[output]["changed"] = 1
+        self.routing_table[output]["timeout"] = 1
+        self.routing_table[output]["timer"] = deleteTimeout
+        
+        deleteTimeout.start()   
+        self.printRoutingTable()    
+        
+        
+    
+    def deleteTimer(self, output):
+        print("[" + time.strftime("%H:%M:%S") + "]:  Router: " + str(output) 
+               + " timed out, deleting from routing table." )
+         
+        del self.routing_table[output]
+        self.printRoutingTable()
     
     def timer(self, period, function):
         '''Start a periodic timer which calls a specified function'''
