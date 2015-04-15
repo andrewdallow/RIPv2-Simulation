@@ -86,7 +86,7 @@ class StartUp(State):
         self.get_outputs(config)
 
         self.setup_routing_table()
-        self.fsm.router.print_pouting_table()
+        self.fsm.router.print_routing_table()
 
         self.fsm.to_transition("toWaiting")
 
@@ -227,7 +227,7 @@ class ReadMessage(State):
         if self.fsm.router.route_change:
             self.fsm.router.trigger_update()
 
-        self.fsm.router.print_pouting_table()
+        self.fsm.router.print_routing_table()
         self.fsm.to_transition("toWaiting")
 
     def exit(self):
@@ -593,7 +593,7 @@ class Router:
                       " updated with metric=" + str(rte.metric) +
                       ", nexthop=" + str(rte.nexthop) + ".")
 
-    def print_pouting_table(self):
+    def print_routing_table(self):
         '''Print the routing table to the terminal'''
         line = "+-----------+----------+-----------+---------------+----------+"
         print(line)
@@ -656,7 +656,7 @@ class Router:
                     self.route_change = True
                     rte.metric = RIPRouteEntry.MAX_METRIC
                     rte.timeout = datetime.datetime.now()
-                    self.print_pouting_table()
+                    self.print_routing_table()
                     print_message("Router: " + str(rte.addr) + " timed out.")
 
     def garbage_timer(self):
@@ -687,7 +687,7 @@ class Router:
 
             for entry in delete_routes:
                 del self.routing_table[entry]
-                self.print_pouting_table()
+                self.print_routing_table()
 
     def timer(self, function, param=None):
         '''Start a periodic timer which calls a specified function'''
