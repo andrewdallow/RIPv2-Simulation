@@ -1,0 +1,4 @@
+[Settings]
+router-id = 7
+input-ports = 5014, 5015
+outputs = 5001-8-1, 5009-6-4
