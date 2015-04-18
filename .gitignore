@@ -1,0 +1,5 @@
+.project
+.pydevproject
+__pycache__/Router.cpython-33.pyc
+*.pyc
+*.checkstyle
