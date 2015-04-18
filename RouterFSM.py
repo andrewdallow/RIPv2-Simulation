@@ -610,7 +610,7 @@ class Router:
             print(line)
 
     def trigger_update(self):
-        '''Send Routing update for only the routes which have changed.'''
+        '''Send Routing update for only the routes which have changed'''
         changed_rtes = []
         print_message("Sending Trigger update.")
         for rte in self.routing_table.values():
