@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 .project
 .pydevproject
 __pycache__/Router.cpython-33.pyc
@@ -7,4 +6,3 @@ __pycache__/Router.cpython-33.pyc
 =======
 *.swp
 pid_list.txt
->>>>>>> origin/master
