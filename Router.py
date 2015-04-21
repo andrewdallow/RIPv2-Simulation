@@ -510,10 +510,11 @@ class RIPRouteEntry:
 
     def __repr__(self):
         template = "|{:^11}|{:^10}|{:^11}|{:^15}|{:^10}|"
-        if self.timeout == None:
 
+        # Check that timeout is set
+        if self.timeout == None:
             return template.format(self.addr, self.metric, self.nexthop,
-                                   self.changed, self.timeout)
+                                   self.changed, str(self.timeout))
 
         else:
             return template.format(self.addr, self.metric, self.nexthop,
