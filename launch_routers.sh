@@ -1,10 +1,10 @@
 #!/bin/sh
 
-ROUTERS="1 2 3" #4 5 6 7"
+ROUTERS="1 2 3 4 5 6 7"
 
 for rout_num in $ROUTERS
 do
-	python3 Router.py "router_$rout_num.txt" & pids="${pids-} $!"
+  gnome-terminal -x python3 Router.py "router_$rout_num.txt" & pids="${pids-} $!"
 done
 echo $pids
 
