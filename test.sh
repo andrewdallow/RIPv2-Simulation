@@ -24,7 +24,7 @@ echo $pids > pid_list.txt
 
 ACTIVE_ROUTERS=($pids)
 
-sleep 30 # wait for routing tables to update
+sleep 30 # wait for routing tables to update 
 
 # kill router 3
 kill ${ACTIVE_ROUTERS[2]}
