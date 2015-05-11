@@ -108,6 +108,8 @@ import struct
 import datetime
 from random import randint, randrange
 
+DEBUG = False
+
 HOST = '127.0.0.1'  # localhost
 BASE_TIMER = 5
 MAX_METRIC = 16
@@ -517,9 +519,10 @@ class RIPRouteEntry:
                                    self.changed, str(self.timeout))
 
         else:
+            timeout = (datetime.datetime.now() - self.timeout).total_seconds()
             return template.format(self.addr, self.metric, self.nexthop,
                                    self.changed,
-                                   self.timeout.strftime("%H:%M:%S"))
+                                   round(timeout, 1))
 
     def _init_from_host(self, address, nexthop, metric):
         '''Init for data from host'''
@@ -694,9 +697,14 @@ class Router:
         print(
             "+-----------+----------+-----------+---------------+----------+")
 
+        print(self.routing_table[self.router_settings['id']])
+        print(
+            "+===========+==========+===========+===============+==========+")
+
         for entry in self.routing_table:
-            print(self.routing_table[entry])
-            print(line)
+            if entry != self.router_settings['id']:
+                print(self.routing_table[entry])
+                print(line)
 
     def trigger_update(self):
         '''Send Routing update for only the routes which have changed'''
@@ -808,7 +816,8 @@ class Router:
 
 def print_message(message):
     '''Print the given message with the current time before it'''
-    print("[" + time.strftime("%H:%M:%S") + "]: " + message)
+    if DEBUG:
+        print("[" + time.strftime("%H:%M:%S") + "]: " + message)
 
 
 def main():
