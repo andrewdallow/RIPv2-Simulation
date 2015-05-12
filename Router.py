@@ -107,6 +107,7 @@ import threading
 import struct
 import datetime
 from random import randint, randrange
+import logging
 
 HOST = '127.0.0.1'  # localhost
 BASE_TIMER = 5
@@ -241,7 +242,7 @@ class StartUp(State):
                     socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 print_message('Socket ' + str(port) + ' Created.')
             except socket.error as msg:
-                print('Failed to create socket. Message: ' + str(msg))
+                logging.info('Failed to create socket. Message: ' + str(msg))
                 sys.exit()
 
             # bind port to socket
@@ -251,7 +252,7 @@ class StartUp(State):
 
                 print_message('Socket ' + str(port) + ' Bind Complete.')
             except socket.error as msg:
-                print('Failed to create socket. Message ' + str(msg))
+                logging.info('Failed to create socket. Message ' + str(msg))
                 sys.exit()
 
     def setup_routing_table(self):
@@ -685,18 +686,18 @@ class Router:
     def print_routing_table(self):
         '''Print the routing table to the terminal'''
         line = "+-----------+----------+-----------+---------------+----------+"
-        print(line)
-        print(
+        logging.info(line)
+        logging.info(
             "|                      Routing Table                          |")
-        print(line)
-        print(
+        logging.info(line)
+        logging.info(
             "|Router ID  |  Metric  |  NextHop  |  ChangedFlag  |  Timeout |")
-        print(
+        logging.info(
             "+-----------+----------+-----------+---------------+----------+")
 
         for entry in self.routing_table:
-            print(self.routing_table[entry])
-            print(line)
+            logging.info(self.routing_table[entry])
+            logging.info(line)
 
     def trigger_update(self):
         '''Send Routing update for only the routes which have changed'''
@@ -808,13 +809,14 @@ class Router:
 
 def print_message(message):
     '''Print the given message with the current time before it'''
-    print("[" + time.strftime("%H:%M:%S") + "]: " + message)
+    logging.info("[" + time.strftime("%H:%M:%S") + "]: " + message)
 
 
 def main():
     '''Main function to run the program.'''
 
     if __name__ == "__main__":
+        logging.basicConfig(filename='router{}.log'.format(time.strftime("%d%h%S")),level=logging.DEBUG)
         router = Router(str(sys.argv[-1]))
         router.start_timers()
         router.main_loop()
