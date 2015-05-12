@@ -5,6 +5,5 @@ echo $pids
 
 for pid in $pids
 do
-	kill $pid
+   kill $pid
 done
-
