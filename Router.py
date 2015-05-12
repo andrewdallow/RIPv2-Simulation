@@ -108,6 +108,8 @@ import struct
 import datetime
 from random import randint, randrange
 
+DEBUG = False
+
 HOST = '127.0.0.1'  # localhost
 BASE_TIMER = 5
 MAX_METRIC = 16
@@ -509,17 +511,19 @@ class RIPRouteEntry:
             raise ValueError
 
     def __repr__(self):
-        template = "|{:^11}|{:^10}|{:^11}|{:^15}|{:^10}|"
+        template = "|{:^11}|{:^10}|{:^11}|{:^15}|{:^10}|{:^13}|"
 
         # Check that timeout is set
         if self.timeout == None:
             return template.format(self.addr, self.metric, self.nexthop,
-                                   self.changed, str(self.timeout))
+                                   self.changed, self.garbage,
+                                   str(self.timeout))
 
         else:
+            timeout = (datetime.datetime.now() - self.timeout).total_seconds()
             return template.format(self.addr, self.metric, self.nexthop,
-                                   self.changed,
-                                   self.timeout.strftime("%H:%M:%S"))
+                                   self.changed, self.garbage,
+                                   round(timeout, 1))
 
     def _init_from_host(self, address, nexthop, metric):
         '''Init for data from host'''
@@ -684,19 +688,26 @@ class Router:
 
     def print_routing_table(self):
         '''Print the routing table to the terminal'''
-        line = "+-----------+----------+-----------+---------------+----------+"
+        line = "+-----------+----------+-----------+---------------+----------+-------------+"
         print(line)
         print(
-            "|                      Routing Table                          |")
+            "|                             Routing Table   (Router "
+            + str(self.router_settings['id']) + ")                    |")
         print(line)
         print(
-            "|Router ID  |  Metric  |  NextHop  |  ChangedFlag  |  Timeout |")
+            "|Router ID  |  Metric  |  NextHop  |  ChangedFlag  |  Garbage |  Timeout(s) |")
+        print(line)
+
+        print(self.routing_table[self.router_settings['id']])
+
         print(
-            "+-----------+----------+-----------+---------------+----------+")
+            "+===========+==========+===========+===============+==========+=============+")
 
         for entry in self.routing_table:
-            print(self.routing_table[entry])
-            print(line)
+            if entry != self.router_settings['id']:
+                print(self.routing_table[entry])
+                print(line)
+        print('\n')
 
     def trigger_update(self):
         '''Send Routing update for only the routes which have changed'''
@@ -719,7 +730,6 @@ class Router:
             sock = list(self.router_settings['inputs'].values())[1]
             local_header = RIPHeader(router_id=self.router_settings['id'])
 
-
             for output in self.router_settings['outputs']:
                 # Split horizon
                 # Remove RTES for which nexthop == output
@@ -728,10 +738,12 @@ class Router:
                     if entry.nexthop != output:
                         split_horizon_entries.append(entry)
                     else:
-                        print("Not sending to: ", output, " For destination", entry.addr)
+                        print_message("Not sending to: " + str(output) +
+                                      " For destination" + str(entry.addr))
 
                 # comment out to disable split horizon
-                packet = RIPPacket(header=local_header, rtes=split_horizon_entries)
+                packet = RIPPacket(
+                    header=local_header, rtes=split_horizon_entries)
 
                 # Uncomment to disable split horizon
                 # packet = RIPPacket(header=local_header, rtes=entries)
@@ -822,7 +834,8 @@ class Router:
 
 def print_message(message):
     '''Print the given message with the current time before it'''
-    print("[" + time.strftime("%H:%M:%S") + "]: " + message)
+    if DEBUG:
+        print("[" + time.strftime("%H:%M:%S") + "]: " + message)
 
 
 def main():
