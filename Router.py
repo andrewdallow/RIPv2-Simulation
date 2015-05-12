@@ -719,9 +719,23 @@ class Router:
             sock = list(self.router_settings['inputs'].values())[1]
             local_header = RIPHeader(router_id=self.router_settings['id'])
 
-            packet = RIPPacket(header=local_header, rtes=entries)
 
             for output in self.router_settings['outputs']:
+                # Split horizon
+                # Remove RTES for which nexthop == output
+                split_horizon_entries = []
+                for entry in entries:
+                    if entry.nexthop != output:
+                        split_horizon_entries.append(entry)
+                    else:
+                        print("Not sending to: ", output, " For destination", entry.addr)
+
+                # comment out to disable split horizon
+                packet = RIPPacket(header=local_header, rtes=split_horizon_entries)
+
+                # Uncomment to disable split horizon
+                # packet = RIPPacket(header=local_header, rtes=entries)
+
                 sock.sendto(packet.serialize(),
                             (HOST,
                              self.router_settings['outputs'][output]["port"]))
