@@ -738,8 +738,14 @@ class Router:
                     if entry.nexthop != output:
                         split_horizon_entries.append(entry)
                     else:
-                        print_message("Not sending to: " + str(output) +
-                                      " For destination" + str(entry.addr))
+                        # Poison reverse
+                        # Create new entry to get around some funky referencing
+                        # When doing poisoned_entry = entry
+                        poisoned_entry = RIPRouteEntry(rawdata=None,
+                                src_id=None, address=entry.addr,
+                                nexthop=entry.nexthop, metric= RIPRouteEntry.MAX_METRIC,
+                                imported=entry.imported)
+                        split_horizon_entries.append(poisoned_entry)
 
                 # comment out to disable split horizon
                 packet = RIPPacket(
