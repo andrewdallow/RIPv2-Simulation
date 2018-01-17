@@ -2,6 +2,31 @@
 
 Authors: Andrew Dallow and Dillion George 
 
+Summary: Program that implements a routing deamon based on the 
+     RIP version 2 protocol from RFC2453.
+
+Usage: python3 Router.py <router_config_file>
+
+### Configuration File:
+
+The user supplies a router configuration file of the format:
+
+     [Settings]
+     router-id = <router_number>
+     input-ports = <input> [, <input>, ...]
+     outputs = <output>-<metric>-<destination_router>
+                         [, <output>-<metric>-<destination_router>, ...]
+
+where,
+ router_number: ID of router between 1 - 64000.
+ input: port number between 1024 - 64000.
+ output: port number between 1024 - 6400, 
+         not equal to any inputs.
+ metric: metric of output between 1 - 16.
+ destination_router: ID of destination router.
+
+### Description:
+
 This program implements a basic RIPv2 routing protocol from [RFC2453](https://tools.ietf.org/html/rfc2453)
 for routing computations in computer networks. It takes a configuration 
 file as shown above and sets up a router with a new socket for each 
@@ -52,22 +77,22 @@ section 3.9.2.
 
   Timers (all timers are on separate threads) (RFC2453 section 3.8):
 
-      *Update timer - Periodic unsolicited response message sent to all
+      Update timer - Periodic unsolicited response message sent to all
           outputs. The period is adjusted each time to a random value 
           between 0.8 * BASE_TIMER and 1.2 * BASE_TIMER to prevent 
           synchronized updates. 
 
-      *Timeout - used to check the routing table for RTEs which have
+      Timeout - used to check the routing table for RTEs which have
           have not been updated within the ROUTE_TIMEOUT interval. If
           a router has not been heard from within this time, then set the
           metric to the max metric of 16 and start the garbage collection
           timer.
 
-      *Garbage timer - used to check the routing table for RTEs set 
+      Garbage timer - used to check the routing table for RTEs set 
           for garbage collection. If the timeout >= DELETE_TIMEOUT, 
           mark the RTE for deletion.
 
-      *Garbage Collection - used to check the routing table for RTEs 
+      Garbage Collection - used to check the routing table for RTEs 
           marked for deletion, and removes those entries from the table. 
  
  ## License ##
