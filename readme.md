@@ -96,7 +96,7 @@ section 3.9.2.
           marked for deletion, and removes those entries from the table. 
  
  ## License ##
-      Copyright 2016 Andrew Dallow
+      Copyright 2015 Andrew Dallow
 
       Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License.
