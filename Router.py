@@ -2,7 +2,7 @@
     File: Router.py
     Course: COSC364
     Date: 20/04/2015
-    Authors: Andrew Dallow (56999204), Dillon George ([INSERT ID HERE])
+    Authors: Andrew Dallow, Dillon George
     
     Summary: Program that implements a routing deamon based on the 
              RIP version 2 protocol from RFC2453.
