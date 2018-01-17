@@ -2,7 +2,7 @@
 
 Authors: Andrew Dallow and Dillion George 
 
-This program implements a basic RIPv2 routing protocol from RFC2453
+This program implements a basic RIPv2 routing protocol from [RFC2453](https://tools.ietf.org/html/rfc2453)
 for routing computations in computer networks. It takes a configuration 
 file as shown above and sets up a router with a new socket for each 
 input-port.
